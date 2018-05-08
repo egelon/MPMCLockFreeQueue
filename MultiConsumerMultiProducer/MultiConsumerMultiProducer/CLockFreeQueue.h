@@ -2,7 +2,7 @@
 #ifndef CLOCKFREEQUEUE_H
 #define CLOCKFREEQUEUE_H
 
-#include "CNode.h"
+#include "Node.h"
 
 #include <iostream>
 #include <chrono>
@@ -14,7 +14,7 @@ class CLockFreeQueue
 public:
    CLockFreeQueue()
    {
-      m_pFirst = new CNode<T>(nullptr);
+      m_pFirst = new Node<T>(nullptr);
       m_pLast = m_pFirst;
       m_bProducerLock = false;
       m_bConsumerLock = false;
@@ -24,7 +24,7 @@ public:
    {
       while (m_pFirst != nullptr)
       {
-         CNode<T>* tmp = m_pFirst;
+         Node<T>* tmp = m_pFirst;
          m_pFirst = m_pFirst->m_pNext;
          delete tmp->m_pValue;
          delete tmp;
@@ -34,7 +34,7 @@ public:
    void ProduceNewNode(const T& pValueToAdd)
    {
       //make a new node locally
-      CNode<T>* pNewNode = new CNode<T>(new T(pValueToAdd));
+      Node<T>* pNewNode = new Node<T>(new T(pValueToAdd));
 
       //do some fake work
       std::cout << "Starting to produce item" << std::endl;
@@ -68,8 +68,8 @@ public:
       while (m_bConsumerLock.exchange(true)) { }  //acquire exclusivity
       //we are now in our "critical section"
 
-      CNode<T>* pOldDummyHead = m_pFirst; //get a pointer to the empty "dummy head" node
-      CNode<T>* pFirstValueNode = m_pFirst->m_pNext; //...and to its "next" node, which is the first "actual" node with a value (hopefully)
+      Node<T>* pOldDummyHead = m_pFirst; //get a pointer to the empty "dummy head" node
+      Node<T>* pFirstValueNode = m_pFirst->m_pNext; //...and to its "next" node, which is the first "actual" node with a value (hopefully)
 
       //check if the "value" node is empty
       if (pFirstValueNode == nullptr)
@@ -118,16 +118,16 @@ private:
 
    unsigned char m_ucPadding_0[CACHE_LINE_SIZE];
    // for one consumer at a time
-   CNode<T>* m_pFirst;
-   unsigned char m_ucPadding_1[CACHE_LINE_SIZE - sizeof(CNode<T>*)];
+   Node<T>* m_pFirst;
+   unsigned char m_ucPadding_1[CACHE_LINE_SIZE - sizeof(Node<T>*)];
 
    // shared among consumers
    std::atomic<bool> m_bConsumerLock;
    unsigned char m_ucPadding_2[CACHE_LINE_SIZE - sizeof(std::atomic<bool>)];
 
    // for one producer at a time
-   CNode<T>* m_pLast;
-   unsigned char m_ucPadding_3[CACHE_LINE_SIZE - sizeof(CNode<T>*)];
+   Node<T>* m_pLast;
+   unsigned char m_ucPadding_3[CACHE_LINE_SIZE - sizeof(Node<T>*)];
 
    // shared among producers
    std::atomic<bool> m_bProducerLock;
