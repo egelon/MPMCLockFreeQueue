@@ -11,4 +11,5 @@ Multi-producer, multi-consumer lock-free queue implementation
 
 <li>https://solarianprogrammer.com/2011/12/16/cpp-11-thread-tutorial/</li>
 <li>https://solarianprogrammer.com/2012/02/27/cpp-11-thread-tutorial-part-2/</li>
+<li>https://www.classes.cs.uchicago.edu/archive/2013/spring/12300-1/labs/lab6/</li>
 </ul>
