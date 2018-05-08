@@ -8,6 +8,8 @@
 #include <chrono>
 #include <thread>
 
+using namespace std::literals::chrono_literals;
+
 template <typename T>
 class CLockFreeQueue
 {
@@ -31,15 +33,15 @@ public:
       }
    };
 
-   void ProduceNewNode(const T& pValueToAdd)
+   void ProduceNewNode(const T& pValueToAdd, int iThreadID )
    {
       //make a new node locally
       Node<T>* pNewNode = new Node<T>(new T(pValueToAdd));
 
       //do some fake work
-      std::cout << "Starting to produce item" << std::endl;
+      std::cout << "T_PRODUCE" << iThreadID << ": Starting to produce item" << std::endl;
       auto start = std::chrono::high_resolution_clock::now();
-      std::this_thread::sleep_for(THREAD_SLEEP_TIME_SECONDS);
+      std::this_thread::sleep_for(THREAD_PRODUCER_SLEEP_TIME_SECONDS);
 
       while (m_bProducerLock.exchange(true)) { } //acquire exclusivity (essentially "obtain a critical section lock")
       //we are now in our "critical section"
@@ -53,13 +55,13 @@ public:
       //might as well see how long it took
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> elapsed = end - start;
-      std::cout << "Item produced in " << elapsed.count() << " ms\n";
+      std::cout << "T_PRODUCE" << iThreadID << ": Item "<< pValueToAdd <<" produced in " << elapsed.count() << " ms\n";
    }
 
-   bool ConsumeHeadNode(T& result)
+   bool ConsumeHeadNode(T& result, int iThreadID)
    {
       //start a timer
-      std::cout << "Starting to handle first item" << std::endl;
+      std::cout << "T_CONSUME" << iThreadID << ": Starting to handle first item" << std::endl;
       auto start = std::chrono::high_resolution_clock::now();
       
 
@@ -83,7 +85,7 @@ public:
          //might as well see how long it took
          auto end = std::chrono::high_resolution_clock::now();
          std::chrono::duration<double, std::milli> elapsed = end - start;
-         std::cout << "Queue was empty! Item handled in " << elapsed.count() << " ms\n";
+         std::cout << "T_CONSUME" << iThreadID << ": Queue was empty! Item handled in " << elapsed.count() << " ms\n";
          return false;
       }
 
@@ -100,16 +102,16 @@ public:
       m_bConsumerLock = false; //release exclusivity
 
       //do some fake work
-      std::this_thread::sleep_for(THREAD_SLEEP_TIME_SECONDS);
+      std::this_thread::sleep_for(THREAD_CONSUMER_SLEEP_TIME_SECONDS);
 
       result = *pNodeValue;    //copy the node's value to the output param
-      delete valpNodeValue; // clean up the value
+      delete pNodeValue; // clean up the value
       delete pOldDummyHead; //and the old dummy
 
       //might as well see how long it took
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> elapsed = end - start;
-      std::cout << "Item handled in " << elapsed.count() << " ms\n";
+      std::cout << "T_CONSUME" << iThreadID << ": Item handled in " << elapsed.count() << " ms\n";
 
       return true;
    }
